@@ -9,6 +9,70 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+// Security: Manual Security Headers (XSS, Clickjacking, MIME protection)
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
+// Mock Token database for the sandbox session
+const SECURE_TOKEN = "session_token_world_cup_2026_stadium_admin_auth";
+
+// Authentication Endpoints
+app.post("/api/auth/login", (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: "Username and passcode are required." });
+  }
+
+  // Support both username/passcode or secure admin password
+  if (
+    username === "stadium_admin" && 
+    (password === "2026" || password === "FifaWorldCup2026!")
+  ) {
+    return res.json({
+      success: true,
+      token: SECURE_TOKEN,
+      user: {
+        username: "stadium_admin",
+        role: "admin",
+        name: "Command Lead",
+        assignedSector: "Command Center"
+      }
+    });
+  }
+
+  return res.status(401).json({ error: "Access denied. Invalid operator credentials or PIN passcode." });
+});
+
+app.get("/api/auth/verify", (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader === `Bearer ${SECURE_TOKEN}`) {
+    return res.json({
+      success: true,
+      user: {
+        username: "stadium_admin",
+        role: "admin",
+        name: "Command Lead",
+        assignedSector: "Command Center"
+      }
+    });
+  }
+  return res.status(401).json({ error: "Invalid or expired session token." });
+});
+
+// Authorization middleware to protect sensitive staff-mode APIs
+const requireAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== `Bearer ${SECURE_TOKEN}`) {
+    return res.status(401).json({ error: "Unauthorized access. Valid stadium operator session required." });
+  }
+  next();
+};
+
 const PORT = 3000;
 
 // Lazy load and initialize Gemini Client to prevent crash if key is missing on startup
@@ -44,6 +108,13 @@ app.get("/api/health", (req, res) => {
 app.post("/api/gemini/chat", async (req, res) => {
   try {
     const { messages, userType = "fan" } = req.body;
+
+    if (userType === "staff") {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || authHeader !== `Bearer ${SECURE_TOKEN}`) {
+        return res.status(401).json({ error: "Unauthorized staff chat access. Please sign in again." });
+      }
+    }
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: "Messages array is required." });
@@ -99,7 +170,7 @@ Stadium details:
 });
 
 // 3. AI Incident Action Guide Generator (Structured Output)
-app.post("/api/gemini/incident-guide", async (req, res) => {
+app.post("/api/gemini/incident-guide", requireAuth, async (req, res) => {
   try {
     const { incidentDescription, location, currentImpact } = req.body;
 
@@ -166,7 +237,7 @@ You must return a JSON response matching the requested schema.`,
 });
 
 // 4. Smart Volunteer Dispatch and Task Parser
-app.post("/api/gemini/volunteer-dispatch", async (req, res) => {
+app.post("/api/gemini/volunteer-dispatch", requireAuth, async (req, res) => {
   try {
     const { dispatchPrompt } = req.body;
 

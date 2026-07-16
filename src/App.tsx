@@ -86,6 +86,67 @@ export default function App() {
   // Notification Toast states
   const [notification, setNotification] = useState<{ message: string; type: "error" | "success" | "info" } | null>(null);
 
+  // Authentication states
+  const [isStaffAuthenticated, setIsStaffAuthenticated] = useState<boolean>(false);
+  const [staffToken, setStaffToken] = useState<string | null>(null);
+  const [loginUsername, setLoginUsername] = useState<string>("");
+  const [loginPassword, setLoginPassword] = useState<string>("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState<boolean>(false);
+
+  // Check sessionStorage for active token on component mount
+  useEffect(() => {
+    const savedToken = sessionStorage.getItem("stadium_auth_token");
+    if (savedToken) {
+      setStaffToken(savedToken);
+      setIsStaffAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("stadium_auth_token");
+    setStaffToken(null);
+    setIsStaffAuthenticated(false);
+    setNotification({ message: "Operator session signed out successfully.", type: "info" });
+  };
+
+  const handleLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!loginUsername.trim() || !loginPassword.trim()) {
+      setLoginError("Both username and PIN/password are required.");
+      return;
+    }
+
+    setLoginLoading(true);
+    setLoginError(null);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loginUsername, password: loginPassword })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Authentication failed.");
+      }
+
+      const data = await response.json();
+      sessionStorage.setItem("stadium_auth_token", data.token);
+      setStaffToken(data.token);
+      setIsStaffAuthenticated(true);
+      setLoginUsername("");
+      setLoginPassword("");
+      setNotification({ message: "Stadium command portal authorization granted!", type: "success" });
+    } catch (err: any) {
+      console.error(err);
+      setLoginError(err.message || "Invalid operator username or access passcode.");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
   // Auto-clear notification after 6 seconds
   useEffect(() => {
     if (notification) {
@@ -193,7 +254,10 @@ export default function App() {
     try {
       const response = await fetch("/api/gemini/incident-guide", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${staffToken}`
+        },
         body: JSON.stringify({
           incidentDescription: incident.description,
           location: incident.location,
@@ -269,7 +333,10 @@ export default function App() {
     try {
       const response = await fetch("/api/gemini/volunteer-dispatch", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${staffToken}`
+        },
         body: JSON.stringify({ dispatchPrompt })
       });
 
@@ -388,31 +455,44 @@ export default function App() {
           </div>
 
           {/* Mode Switcher Buttons */}
-          <div className="flex items-center bg-white/5 backdrop-blur-md p-1 rounded-xl border border-white/10 shadow-inner">
-            <button
-              id="mode-staff-btn"
-              onClick={() => setUserMode("staff")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                userMode === "staff"
-                  ? "bg-white/15 text-white border border-white/10 shadow-md font-semibold"
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Activity className="h-4 w-4 text-blue-400" />
-              <span>Staff Operations</span>
-            </button>
-            <button
-              id="mode-fan-btn"
-              onClick={() => setUserMode("fan")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                userMode === "fan"
-                  ? "bg-white/15 text-white border border-white/10 shadow-md font-semibold"
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Compass className="h-4 w-4 text-blue-400" />
-              <span>Fan Assist Hub</span>
-            </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-white/5 backdrop-blur-md p-1 rounded-xl border border-white/10 shadow-inner">
+              <button
+                id="mode-staff-btn"
+                onClick={() => setUserMode("staff")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  userMode === "staff"
+                    ? "bg-white/15 text-white border border-white/10 shadow-md font-semibold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Activity className="h-4 w-4 text-blue-400" />
+                <span>Staff Operations</span>
+              </button>
+              <button
+                id="mode-fan-btn"
+                onClick={() => setUserMode("fan")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  userMode === "fan"
+                    ? "bg-white/15 text-white border border-white/10 shadow-md font-semibold"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Compass className="h-4 w-4 text-blue-400" />
+                <span>Fan Assist Hub</span>
+              </button>
+            </div>
+
+            {userMode === "staff" && isStaffAuthenticated && (
+              <button
+                id="logout-btn"
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3.5 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 hover:border-rose-500/30 rounded-xl text-xs font-semibold transition"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span>Logout</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -420,10 +500,122 @@ export default function App() {
       {/* Main Body Layout */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10">
         {userMode === "staff" ? (
-          /* ==========================================
-             STAFF OPERATIONS CONTROL HUB
-             ========================================== */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          !isStaffAuthenticated ? (
+            /* ==========================================
+               STAFF OPERATIONS SECURITY AUTHORIZATION LOCK
+               ========================================== */
+            <div id="security-login-container" className="max-w-md mx-auto mt-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden text-center">
+              <div className="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] bg-blue-600 rounded-full blur-[80px] opacity-10 pointer-events-none"></div>
+              <div className="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] bg-indigo-800 rounded-full blur-[80px] opacity-15 pointer-events-none"></div>
+              
+              <div className="mx-auto h-12 w-12 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
+                <ShieldAlert className="h-6 w-6 text-blue-400" aria-hidden="true" />
+              </div>
+              
+              <h2 className="text-xl font-bold text-white font-display">Command Center Lock</h2>
+              <p className="text-xs text-slate-400 mt-1 mb-6 leading-relaxed">
+                Authorization required to access Metropolitan Stadium Operations Hub & real-time telemetry datasets.
+              </p>
+
+              {loginError && (
+                <div id="login-error-alert" className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 text-xs text-left flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" aria-hidden="true" />
+                  <span>{loginError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleLogin} className="space-y-4 text-left">
+                <div>
+                  <label htmlFor="login-username" className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider font-mono">
+                    Operator ID
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                      <User className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <input
+                      id="login-username"
+                      type="text"
+                      required
+                      value={loginUsername}
+                      onChange={(e) => setLoginUsername(e.target.value)}
+                      placeholder="e.g., stadium_admin"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/60 focus:bg-black/60 transition focus-visible:ring-2 focus-visible:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="login-password" className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider font-mono">
+                    Security Passcode (PIN)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                      <Clock className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <input
+                      id="login-password"
+                      type="password"
+                      required
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="Enter 4-digit PIN or password"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/60 focus:bg-black/60 transition focus-visible:ring-2 focus-visible:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  id="submit-login-btn"
+                  type="submit"
+                  disabled={loginLoading}
+                  className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-3 rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {loginLoading ? (
+                    <>
+                      <div className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Authorizing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Unlock Portal</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Quick Demo Assist Credentials Helper */}
+              <div className="mt-6 pt-5 border-t border-white/5 text-left">
+                <span className="text-[10px] text-blue-400 font-mono font-bold block uppercase tracking-wider mb-2">
+                  🔐 SANDBOX DEMO QUICK AUTH
+                </span>
+                <p className="text-[10px] text-slate-400 leading-relaxed mb-3">
+                  This simulated sandbox has credentials preconfigured. Click below for immediate, high-security authorized access.
+                </p>
+                <button
+                  id="quick-demo-auth-btn"
+                  onClick={() => {
+                    setLoginUsername("stadium_admin");
+                    setLoginPassword("2026");
+                    // Trigger dynamic auth fetch immediately
+                    setTimeout(() => {
+                      const loginBtn = document.getElementById("submit-login-btn");
+                      if (loginBtn) loginBtn.click();
+                    }, 100);
+                  }}
+                  className="w-full py-2 bg-white/5 hover:bg-white/10 text-slate-300 font-mono text-[10px] font-semibold rounded-lg border border-white/5 transition flex items-center justify-center gap-1.5"
+                >
+                  <Zap className="h-3.5 w-3.5 text-yellow-400" aria-hidden="true" />
+                  <span>Click to Auto-Fill & Unlock (Admin/2026)</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* ==========================================
+               STAFF OPERATIONS CONTROL HUB
+               ========================================== */
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
             {/* COLUMN 1 (4/12): Telemetry & Real-Time Gates */}
             <div className="lg:col-span-4 flex flex-col gap-6">
@@ -552,8 +744,9 @@ export default function App() {
                     <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider font-display">Log New Stadium Incident</h4>
                     
                     <div>
-                      <label className="block text-[10px] font-mono text-slate-400 mb-1">STADIUM LOCATION</label>
+                      <label htmlFor="new-incident-location" className="block text-[10px] font-mono text-slate-400 mb-1">STADIUM LOCATION</label>
                       <select 
+                        id="new-incident-location"
                         value={newIncidentLocation} 
                         onChange={(e) => setNewIncidentLocation(e.target.value)}
                         className="w-full text-xs p-2 bg-black/40 border border-white/10 rounded-lg text-white focus:outline-emerald-500"
@@ -568,8 +761,9 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-mono text-slate-400 mb-1">INCIDENT DESCRIPTION</label>
+                      <label htmlFor="new-incident-desc" className="block text-[10px] font-mono text-slate-400 mb-1">INCIDENT DESCRIPTION</label>
                       <textarea
+                        id="new-incident-desc"
                         required
                         value={newIncidentDesc}
                         onChange={(e) => setNewIncidentDesc(e.target.value)}
@@ -800,15 +994,21 @@ export default function App() {
                 </div>
 
                 <form onSubmit={handleAIDispatchParse} className="flex flex-col gap-3">
-                  <div className="relative">
-                    <textarea
-                      required
-                      value={dispatchPrompt}
-                      onChange={(e) => setDispatchPrompt(e.target.value)}
-                      rows={4}
-                      placeholder="e.g. Turnstile congestions at West Gate C VIP entry. Need 3 volunteers to guide them and look for hospitality passes."
-                      className="w-full text-xs p-3 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-emerald-500 focus:bg-black/60 transition"
-                    />
+                  <div>
+                    <label htmlFor="dispatch-prompt" className="block text-[10px] font-mono text-slate-400 mb-1.5 uppercase tracking-wider font-mono">
+                      Dispatch Instruction Prompt
+                    </label>
+                    <div className="relative">
+                      <textarea
+                        id="dispatch-prompt"
+                        required
+                        value={dispatchPrompt}
+                        onChange={(e) => setDispatchPrompt(e.target.value)}
+                        rows={4}
+                        placeholder="e.g. Turnstile congestions at West Gate C VIP entry. Need 3 volunteers to guide them and look for hospitality passes."
+                        className="w-full text-xs p-3 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-emerald-500 focus:bg-black/60 transition"
+                      />
+                    </div>
                   </div>
 
                   <div className="text-[10px] text-slate-400 bg-white/5 p-2 rounded border border-white/5">
@@ -917,6 +1117,7 @@ export default function App() {
             </div>
 
           </div>
+          )
         ) : (
           /* ==========================================
              FAN ASSIST & MULTILINGUAL SUPPORT
@@ -1154,9 +1355,13 @@ export default function App() {
                 </div>
 
                 {/* Input Text box */}
-                <div className="p-4 border-t border-white/10 bg-[#050B18]/80 rounded-b-2xl">
+                <div className="p-4 border-t border-white/10 bg-[#050B18]/80 rounded-b-2xl text-left">
+                  <label htmlFor="fan-chat-input" className="sr-only">
+                    Ask a question to Multilingual Fan Assist
+                  </label>
                   <div className="flex gap-2">
                     <input
+                      id="fan-chat-input"
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
