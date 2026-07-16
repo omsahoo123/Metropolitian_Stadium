@@ -55,3 +55,42 @@ export function isStrongPassword(password: string): boolean {
   const hasNumber = /[0-9]/.test(password);
   return hasUpperCase && hasLowerCase && hasNumber;
 }
+
+/**
+ * Formats a countdown remaining until the match date.
+ */
+export function calculateCountdown(targetDateStr: string, currentOffsetDate?: Date): string {
+  const target = new Date(targetDateStr);
+  const now = currentOffsetDate || new Date();
+  const diffMs = target.getTime() - now.getTime();
+  
+  if (diffMs <= 0) {
+    return "Match Day Live";
+  }
+  
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  if (diffDays > 0) {
+    return `${diffDays}d ${diffHours}h remaining`;
+  }
+  return `${diffHours}h remaining`;
+}
+
+/**
+ * Categorizes a reported issue based on keywords for offline / baseline safety validation.
+ */
+export function classifyIncidentSeverity(desc: string): "Low" | "Medium" | "High" | "Critical" {
+  const d = desc.toLowerCase();
+  if (d.includes("medical") || d.includes("injury") || d.includes("fire") || d.includes("smoke") || d.includes("structural")) {
+    return "Critical";
+  }
+  if (d.includes("network") || d.includes("failure") || d.includes("offline") || d.includes("crash") || d.includes("weapon") || d.includes("security")) {
+    return "High";
+  }
+  if (d.includes("congest") || d.includes("crowd") || d.includes("queue") || d.includes("turnstile") || d.includes("ticket")) {
+    return "Medium";
+  }
+  return "Low";
+}
+

@@ -44,6 +44,9 @@ import {
 } from "recharts";
 import { Message, Incident, Task, GateMetrics, MatchCountdown } from "./types";
 import { INITIAL_MATCHES, INITIAL_GATES, INITIAL_INCIDENTS, INITIAL_TASKS } from "./data";
+import { GateTelemetryPanel } from "./components/GateTelemetryPanel";
+import { VolunteerTaskPanel } from "./components/VolunteerTaskPanel";
+import { IncidentGuidePanel } from "./components/IncidentGuidePanel";
 
 export default function App() {
   // Mode selection: staff (Stadium Command) vs fan (Fan Assistant)
@@ -618,106 +621,8 @@ export default function App() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
             {/* COLUMN 1 (4/12): Telemetry & Real-Time Gates */}
-            <div className="lg:col-span-4 flex flex-col gap-6">
-              
-              {/* Telemetry Chart Box */}
-              <div id="wait-times-chart" className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-400" />
-                    <h3 className="font-semibold text-white font-display">Gate Wait Times (Mins)</h3>
-                  </div>
-                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-semibold animate-pulse">
-                    ● LIVE UPDATES
-                  </span>
-                </div>
-                <div className="h-48 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={gates} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
-                      <XAxis 
-                        dataKey="name" 
-                        tickFormatter={(value) => value.split(" ")[1] || value} 
-                        tick={{ fill: '#94a3b8', fontSize: 11 }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: "rgba(15, 23, 42, 0.9)", backdropFilter: "blur(8px)", borderRadius: "12px", border: "1px solid rgba(255, 255, 255, 0.1)", color: "#fff" }}
-                        labelStyle={{ fontWeight: "bold" }}
-                      />
-                      <Bar dataKey="queueWait" radius={[4, 4, 0, 0]}>
-                        {gates.map((entry, index) => {
-                          let color = "#3b82f6"; // blue
-                          if (entry.status === "critical") color = "#f43f5e"; // rose
-                          if (entry.status === "congested") color = "#f59e0b"; // amber
-                          return <Cell key={`cell-${index}`} fill={color} />;
-                        })}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Gate Status List */}
-              <div id="gate-telemetry-list" className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-white font-display flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-blue-400" />
-                    Gate Ingress Telemetry
-                  </h3>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  {gates.map((gate) => (
-                    <div key={gate.name} className="p-3 border border-white/5 bg-white/5 rounded-xl hover:bg-white/10 transition">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="font-medium text-white text-sm">{gate.name}</span>
-                        <span className={`text-[10px] uppercase font-mono font-semibold px-2 py-0.5 rounded-full border ${
-                          gate.status === "critical" ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
-                          gate.status === "congested" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                          gate.status === "moderate" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                        }`}>
-                          {gate.status}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-2 text-xs font-mono text-slate-400 mb-2">
-                        <div>
-                          <p className="text-[10px] text-slate-500">WAIT TIME</p>
-                          <p className="font-semibold text-slate-200">{gate.queueWait} mins</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-slate-500">FLOW RATE</p>
-                          <p className="font-semibold text-slate-200">{gate.flowRate} fans/m</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-slate-500">STAFF</p>
-                          <p className="font-semibold text-slate-200">{gate.staffAssigned} on duty</p>
-                        </div>
-                      </div>
-
-                      {/* Capacity Bar */}
-                      <div>
-                        <div className="flex justify-between text-[10px] text-slate-400 mb-1">
-                          <span>Capacity Utilization</span>
-                          <span>{gate.capacityPercent}%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full transition-all duration-1000 ${
-                              gate.capacityPercent > 85 ? "bg-rose-500" :
-                              gate.capacityPercent > 70 ? "bg-amber-500" : "bg-emerald-500"
-                            }`} 
-                            style={{ width: `${gate.capacityPercent}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="lg:col-span-4">
+              <GateTelemetryPanel gates={gates} />
             </div>
 
             {/* COLUMN 2 (4/12): Incident Management Logs */}
@@ -838,283 +743,24 @@ export default function App() {
             </div>
 
             {/* COLUMN 3 (4/12): Dynamic AI Response Guide */}
-            <div className="lg:col-span-4 flex flex-col gap-6">
-              
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col gap-4">
-                <div className="border-b border-white/10 pb-3">
-                  <h3 className="font-semibold text-white font-display flex items-center gap-2">
-                    <Zap className="h-4.5 w-4.5 text-blue-400 animate-pulse" />
-                    AI Incident Command Guide
-                  </h3>
-                  <p className="text-xs text-slate-400">Generates crisis control actions & volunteer dispatches</p>
-                </div>
-
-                {selectedIncident ? (
-                  <div className="flex flex-col gap-4 text-left">
-                    <div className="p-3 bg-white/5 rounded-xl border border-white/10">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="font-bold text-xs text-white">{selectedIncident.location}</span>
-                        <span className="text-[10px] font-mono text-slate-400">{selectedIncident.reportedTime}</span>
-                      </div>
-                      <p className="text-xs text-slate-300">{selectedIncident.description}</p>
-                    </div>
-
-                    {/* Check if guidelines are generated */}
-                    {selectedIncident.immediateActions ? (
-                      <div className="flex flex-col gap-4">
-                        
-                        {/* Severity alert */}
-                        <div className={`p-3 rounded-xl border flex items-center gap-2 text-xs ${
-                          selectedIncident.severity === "Critical" ? "bg-rose-500/10 border-rose-500/20 text-rose-300" :
-                          selectedIncident.severity === "High" ? "bg-amber-500/10 border-amber-500/20 text-amber-300" :
-                          "bg-blue-500/10 border-blue-500/20 text-blue-300"
-                        }`}>
-                          <AlertCircle className="h-4 w-4 shrink-0" />
-                          <div>
-                            <span className="font-bold">Severity Assessed: {selectedIncident.severity}</span>
-                            <p className="text-[11px] opacity-90 text-slate-300">{selectedIncident.impact || "Action mandatory."}</p>
-                          </div>
-                        </div>
-
-                        {/* Step by Step list */}
-                        <div>
-                          <h4 className="text-[10px] font-mono text-slate-400 mb-2 uppercase tracking-wider">CONTAINMENT ACTION PLAN</h4>
-                          <div className="flex flex-col gap-2">
-                            {selectedIncident.immediateActions.map((act, index) => (
-                              <div key={index} className="flex gap-2.5 items-start text-xs text-slate-300 bg-white/5 p-2 rounded-xl border border-white/5">
-                                <span className="bg-emerald-500/10 text-emerald-400 h-5 w-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 border border-emerald-500/20">
-                                  {index + 1}
-                                </span>
-                                <p>{act}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Stakeholders list */}
-                        <div>
-                          <h4 className="text-[10px] font-mono text-slate-400 mb-1.5 uppercase tracking-wider">NOTIFICATION MATRIX</h4>
-                          <div className="flex flex-wrap gap-1.5">
-                            {selectedIncident.stakeholderAlerts?.map((st, index) => (
-                              <span key={index} className="bg-white/10 text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded border border-white/10">
-                                {st}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Dispatch Text */}
-                        {selectedIncident.dispatchMessage && (
-                          <div className="bg-emerald-950/40 text-emerald-100 p-3 rounded-xl border border-emerald-500/20 font-mono text-xs">
-                            <div className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-semibold mb-1 uppercase tracking-wider">
-                              <Volume2 className="h-3 w-3" />
-                              Radio Dispatch Template
-                            </div>
-                            <p className="italic">"{selectedIncident.dispatchMessage}"</p>
-                          </div>
-                        )}
-
-                        {/* PA Announcement Script */}
-                        {selectedIncident.announcementScript && (
-                          <div className="bg-blue-950/40 text-blue-100 p-3 rounded-xl border border-blue-500/20 text-xs font-mono">
-                            <div className="flex items-center gap-1.5 text-[9px] text-blue-400 font-bold mb-1 uppercase tracking-wider font-mono">
-                              <Volume2 className="h-3 w-3" />
-                              Public Address Announcement Script
-                            </div>
-                            <p className="italic">"{selectedIncident.announcementScript}"</p>
-                          </div>
-                        )}
-
-                        {/* Prevention strategy */}
-                        {selectedIncident.preventionTip && (
-                          <div className="p-3 bg-amber-950/40 border border-amber-500/20 rounded-xl text-xs text-amber-200">
-                            <span className="font-bold flex items-center gap-1 text-amber-400 text-[11px] uppercase tracking-wider font-mono mb-1">
-                              <Info className="h-3.5 w-3.5" />
-                              Long-Term Operations Tip
-                            </span>
-                            <p className="text-[11px] leading-relaxed text-slate-300">{selectedIncident.preventionTip}</p>
-                          </div>
-                        )}
-
-                        {/* Resolve controls */}
-                        <div className="flex gap-2 pt-2 border-t border-white/10">
-                          {selectedIncident.status !== "resolved" && (
-                            <button
-                              onClick={() => handleResolveIncident(selectedIncident.id)}
-                              className="w-full py-2 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition"
-                            >
-                              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                              <span>Mark Incident Resolved</span>
-                            </button>
-                          )}
-                        </div>
-
-                      </div>
-                    ) : (
-                      <div className="py-6 text-center flex flex-col items-center justify-center gap-3">
-                        <AlertCircle className="h-10 w-10 text-amber-500" />
-                        <div>
-                          <p className="text-sm font-semibold text-white">Operational protocol not evaluated</p>
-                          <p className="text-xs text-slate-400 px-4 mt-1">This reported event requires instant Gemini AI classification and dispatch guidelines.</p>
-                        </div>
-                        <button
-                          onClick={() => handleGenerateAIIncidentGuide(selectedIncident)}
-                          disabled={incidentLoading}
-                          className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 disabled:opacity-50 shadow-sm transition"
-                        >
-                          {incidentLoading ? (
-                            <div className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <Sparkles className="h-3.5 w-3.5" />
-                          )}
-                          <span>Evaluate with Gemini AI</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="py-12 text-center text-slate-400 text-xs">
-                    Select an active incident to assess operational containment steps.
-                  </div>
-                )}
-              </div>
+            <div className="lg:col-span-4">
+              <IncidentGuidePanel
+                selectedIncident={selectedIncident}
+                incidentLoading={incidentLoading}
+                onGenerateAIIncidentGuide={handleGenerateAIIncidentGuide}
+                onResolveIncident={handleResolveIncident}
+              />
             </div>
 
             {/* FULL WIDTH IN STAFF ROW: Volunteer Task Dispatch Board */}
-            <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-12 gap-6 mt-2">
-              
-              {/* Dispatch Form (4/12) */}
-              <div className="md:col-span-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col gap-4 text-left">
-                <div>
-                  <h3 className="font-semibold text-white font-display flex items-center gap-2">
-                    <Sparkles className="h-4.5 w-4.5 text-blue-400" />
-                    AI Smart Volunteer Dispatch
-                  </h3>
-                  <p className="text-xs text-slate-400">Draft full volunteer work cards from natural language prompts</p>
-                </div>
-
-                <form onSubmit={handleAIDispatchParse} className="flex flex-col gap-3">
-                  <div>
-                    <label htmlFor="dispatch-prompt" className="block text-[10px] font-mono text-slate-400 mb-1.5 uppercase tracking-wider font-mono">
-                      Dispatch Instruction Prompt
-                    </label>
-                    <div className="relative">
-                      <textarea
-                        id="dispatch-prompt"
-                        required
-                        value={dispatchPrompt}
-                        onChange={(e) => setDispatchPrompt(e.target.value)}
-                        rows={4}
-                        placeholder="e.g. Turnstile congestions at West Gate C VIP entry. Need 3 volunteers to guide them and look for hospitality passes."
-                        className="w-full text-xs p-3 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-emerald-500 focus:bg-black/60 transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="text-[10px] text-slate-400 bg-white/5 p-2 rounded border border-white/5">
-                    <span className="font-bold">AI Autocomplete outputs:</span> Priority index, recommended staff sizes, skill flags, and checkbox checklists.
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={dispatchLoading || !dispatchPrompt.trim()}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm transition"
-                  >
-                    {dispatchLoading ? (
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4" />
-                        <span>AI Analyze & Dispatch Task</span>
-                      </>
-                    )}
-                  </button>
-                </form>
-              </div>
-
-              {/* Active Tasks Feed (8/12) */}
-              <div id="volunteer-tasks-feed" className="md:col-span-8 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg flex flex-col gap-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-semibold text-white font-display flex items-center gap-2">
-                    <Users className="h-4.5 w-4.5 text-blue-400" />
-                    Active Volunteer Duty Tasks
-                  </h3>
-                  <span className="text-xs text-slate-400">{tasks.length} Active Assignments</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[380px] overflow-y-auto pr-1">
-                  {tasks.map((task) => (
-                    <div key={task.id} className="p-4 border border-white/5 rounded-xl text-left bg-white/5 hover:bg-white/10 transition flex flex-col justify-between">
-                      <div>
-                        {/* Task Header */}
-                        <div className="flex justify-between items-start mb-2 gap-2">
-                          <div>
-                            <span className="text-[10px] font-mono bg-white/10 text-slate-200 px-1.5 py-0.5 rounded font-bold mr-1.5 uppercase border border-white/5">
-                              {task.assignedZone}
-                            </span>
-                            <span className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold border ${
-                              task.priority === "High" ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
-                              task.priority === "Medium" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                            }`}>
-                              {task.priority} Priority
-                            </span>
-                          </div>
-                          
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            {task.assignedCount}/{task.suggestedVolunteers} Staffed
-                          </span>
-                        </div>
-
-                        {/* Title & description */}
-                        <h4 className="font-bold text-sm text-white font-display mb-1">{task.taskTitle}</h4>
-                        <p className="text-xs text-slate-300 mb-3 line-clamp-3">{task.taskDescription}</p>
-
-                        {/* Skills */}
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {task.skillsRequired.map((skill, index) => (
-                            <span key={index} className="text-[9px] bg-white/10 text-slate-300 px-2 py-0.5 rounded font-mono border border-white/5">
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Checkbox Checklist */}
-                        <div className="border-t border-white/10 pt-2.5 mb-3 flex flex-col gap-1.5">
-                          <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">CHECKLIST PROMPT</p>
-                          {task.subtasks.map((sub, idx) => (
-                            <div key={idx} className="flex gap-2 items-start text-[11px] text-slate-300">
-                              <Square className="h-3 w-3 shrink-0 text-slate-500 mt-0.5" />
-                              <span>{sub}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Control buttons */}
-                      <div className="flex gap-2 items-center justify-between border-t border-white/10 pt-3">
-                        <span className={`text-[10px] uppercase font-mono font-bold ${
-                          task.status === "completed" ? "text-emerald-400" :
-                          task.status === "in-progress" ? "text-blue-400" : "text-slate-400"
-                        }`}>
-                          {task.status}
-                        </span>
-
-                        <button
-                          onClick={() => handleIncrementVolunteer(task.id)}
-                          disabled={task.assignedCount >= task.suggestedVolunteers}
-                          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-lg text-xs font-semibold flex items-center gap-1 disabled:bg-white/5 disabled:text-slate-500 disabled:border-transparent transition"
-                        >
-                          <Plus className="h-3 w-3" />
-                          <span>Join Task</span>
-                        </button>
-                      </div>
-
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
+            <VolunteerTaskPanel
+              tasks={tasks}
+              dispatchPrompt={dispatchPrompt}
+              dispatchLoading={dispatchLoading}
+              onDispatchPromptChange={setDispatchPrompt}
+              onAIDispatchParse={handleAIDispatchParse}
+              onIncrementVolunteer={handleIncrementVolunteer}
+            />
 
           </div>
           )
