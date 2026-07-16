@@ -47,6 +47,9 @@ import { INITIAL_MATCHES, INITIAL_GATES, INITIAL_INCIDENTS, INITIAL_TASKS } from
 import { GateTelemetryPanel } from "./components/GateTelemetryPanel";
 import { VolunteerTaskPanel } from "./components/VolunteerTaskPanel";
 import { IncidentGuidePanel } from "./components/IncidentGuidePanel";
+import { FanTicketCard } from "./components/FanTicketCard";
+import { FanMapGuide } from "./components/FanMapGuide";
+import { FanChatPanel } from "./components/FanChatPanel";
 
 export default function App() {
   // Mode selection: staff (Stadium Command) vs fan (Fan Assistant)
@@ -774,258 +777,27 @@ export default function App() {
             <div className="lg:col-span-5 flex flex-col gap-6">
               
               {/* Interactive Match Day Ticket card */}
-              <div className="bg-gradient-to-br from-emerald-800/80 to-slate-950/80 backdrop-blur-md border border-white/10 text-white rounded-2xl p-5 shadow-lg text-left flex flex-col justify-between h-48 relative overflow-hidden">
-                <div className="absolute right-0 bottom-0 opacity-10 font-black text-8xl transform translate-x-4 translate-y-4 font-display pointer-events-none">
-                  2026
-                </div>
-
-                <div className="flex justify-between items-start z-10">
-                  <div>
-                    <span className="bg-emerald-500/20 text-emerald-300 text-[9px] font-mono tracking-widest font-bold px-2 py-0.5 rounded border border-emerald-500/20 uppercase">
-                      OFFICIAL MATCHDAY
-                    </span>
-                    <h3 className="font-bold text-lg font-display text-white mt-1.5">
-                      {matches[0].fixture}
-                    </h3>
-                  </div>
-                  <Calendar className="h-6 w-6 text-emerald-400" />
-                </div>
-
-                <div className="z-10 mt-4 border-t border-white/10 pt-4 flex justify-between items-center">
-                  <div>
-                    <p className="text-[10px] text-emerald-300 font-mono uppercase tracking-wider">STADIUM VENUE</p>
-                    <p className="text-xs font-semibold text-white">{matches[0].stadium}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-emerald-300 font-mono uppercase tracking-wider text-right">INGRESS GATE</p>
-                    <p className="text-xs font-bold text-right text-emerald-400 font-display">GATE B RECOMMENDED</p>
-                  </div>
-                </div>
-              </div>
+              <FanTicketCard match={matches[0]} />
 
               {/* Stadium Seat Map / Gate Entry Guidelines */}
-              <div id="venue-map-guide" className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg text-left">
-                <h3 className="font-semibold text-white font-display flex items-center gap-2 mb-4">
-                  <Compass className="h-5 w-5 text-blue-400" />
-                  Stadium Entry & Transport Map
-                </h3>
-
-                {/* Gate Map Selector Tabs */}
-                <div className="flex border-b border-white/10 mb-4 overflow-x-auto gap-2">
-                  <button
-                    onClick={() => setActiveGateTab("Gate B (North - Parking)")}
-                    className={`pb-2 text-xs font-medium border-b-2 px-1 transition shrink-0 ${
-                      activeGateTab === "Gate B (North - Parking)" 
-                        ? "border-emerald-500 text-white font-bold" 
-                        : "border-transparent text-slate-400 hover:text-slate-200"
-                    }`}
-                  >
-                    Gate B (North)
-                  </button>
-                  <button
-                    onClick={() => setActiveGateTab("Gate A (East - Train)")}
-                    className={`pb-2 text-xs font-medium border-b-2 px-1 transition shrink-0 ${
-                      activeGateTab === "Gate A (East - Train)" 
-                        ? "border-emerald-500 text-white font-bold" 
-                        : "border-transparent text-slate-400 hover:text-slate-200"
-                    }`}
-                  >
-                    Gate A (East)
-                  </button>
-                  <button
-                    onClick={() => setActiveGateTab("Gate D (South - Buses)")}
-                    className={`pb-2 text-xs font-medium border-b-2 px-1 transition shrink-0 ${
-                      activeGateTab === "Gate D (South - Buses)" 
-                        ? "border-emerald-500 text-white font-bold" 
-                        : "border-transparent text-slate-400 hover:text-slate-200"
-                    }`}
-                  >
-                    Gate D (South)
-                  </button>
-                </div>
-
-                {activeGateTab === "Gate B (North - Parking)" && (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-xs text-slate-300">
-                      Ideal entry gate for fans arriving by general parking lot passenger shuttles or rideshare vehicles.
-                    </p>
-                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col gap-2 text-xs text-slate-300">
-                      <div className="flex items-center gap-1.5 font-bold text-white">
-                        <MapPin className="h-3.5 w-3.5 text-emerald-400" />
-                        <span>Parking Shuttle Drops (Lot G & F)</span>
-                      </div>
-                      <p className="text-slate-400">Wait times are currently longer at Gate B. Security clear-bag protocol is enforced strictly here.</p>
-                      <ul className="list-disc list-inside mt-1 flex flex-col gap-1 text-[11px] text-slate-300 font-medium">
-                        <li>Walk towards the giant North plaza arch.</li>
-                        <li>Prepare clear-bags and mobile barcode tickets prior to queue entry.</li>
-                        <li>Accessibility Support desk is available inside Gate B.</li>
-                      </ul>
-                    </div>
-                  </div>
-                )}
-
-                {activeGateTab === "Gate A (East - Train)" && (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-xs text-slate-300">
-                      Serves direct train commuters arriving on the NJ Transit train link from Secaucus Junction. High pre-match volume.
-                    </p>
-                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col gap-2 text-xs text-slate-300">
-                      <div className="flex items-center gap-1.5 font-bold text-white">
-                        <MapPin className="h-3.5 w-3.5 text-emerald-400" />
-                        <span>Meadowlands Rail Station</span>
-                      </div>
-                      <p className="text-slate-400">Very short walking distance (under 3 minutes) from station exit platform to security lanes.</p>
-                      <ul className="list-disc list-inside mt-1 flex flex-col gap-1 text-[11px] text-slate-300 font-medium">
-                        <li>Arrive early to avoid massive pre-match surge.</li>
-                        <li>Follow designated stanchioned walkways.</li>
-                        <li>Ramp access is available for wheelchairs.</li>
-                      </ul>
-                    </div>
-                  </div>
-                )}
-
-                {activeGateTab === "Gate D (South - Buses)" && (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-xs text-slate-300">
-                      Serves organized coach tours, official supporter bus lines, and long-distance city shuttle buses.
-                    </p>
-                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col gap-2 text-xs text-slate-300">
-                      <div className="flex items-center gap-1.5 font-bold text-white">
-                        <MapPin className="h-3.5 w-3.5 text-emerald-400" />
-                        <span>South Coach Loop Plaza</span>
-                      </div>
-                      <p className="text-slate-400">Fast processing with dedicated clear-bag inspection lanes.</p>
-                      <ul className="list-disc list-inside mt-1 flex flex-col gap-1 text-[11px] text-slate-300 font-medium">
-                        <li>Check bus parking bay number for return.</li>
-                        <li>Support volunteers available with translation megaphones.</li>
-                      </ul>
-                    </div>
-                  </div>
-                )}
-
-                {/* Permitted items visual quick notes */}
-                <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-3 text-xs">
-                  <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-300">
-                    <span className="font-bold text-emerald-400 block text-[11px] mb-1">✓ PERMITTED BAGS</span>
-                    <p className="text-[10px] text-emerald-200">Clear plastic, vinyl, or PVC bags not exceeding 12" x 6" x 12". Small clutches.</p>
-                  </div>
-                  <div className="p-2.5 bg-rose-500/10 rounded-xl border border-rose-500/20 text-rose-300">
-                    <span className="font-bold text-rose-400 block text-[11px] mb-1">✗ PROHIBITED</span>
-                    <p className="text-[10px] text-rose-200">Backpacks, camera cases, luggage, standard umbrellas, large banners, noisemakers.</p>
-                  </div>
-                </div>
-
-              </div>
+              <FanMapGuide
+                activeGateTab={activeGateTab}
+                onActiveGateTabChange={setActiveGateTab}
+              />
 
             </div>
 
             {/* COLUMN 2 (7/12): Fan Intelligent Chat Assist Container */}
             <div className="lg:col-span-7 flex flex-col">
               
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl shadow-lg flex flex-col justify-between h-[540px]">
-                
-                {/* Chat Container Header */}
-                <div className="border-b border-white/10 p-4 flex items-center justify-between text-left">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-semibold text-xs">
-                      AI
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm text-white font-display">FIFA 2026 Multilingual Fan Assist</h4>
-                      <p className="text-[10px] text-emerald-400 font-mono font-medium">Powered by Gemini AI • English, Spanish, French, etc.</p>
-                    </div>
-                  </div>
-                  <Languages className="h-4 w-4 text-slate-400" />
-                </div>
-
-                {/* Chat Scroll Feed */}
-                <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-black/10">
-                  {chatMessages.map((msg) => (
-                    <div 
-                      key={msg.id} 
-                      className={`flex flex-col max-w-[85%] text-left ${
-                        msg.role === "user" ? "ml-auto items-end" : "mr-auto items-start"
-                      }`}
-                    >
-                      <div className={`p-3 rounded-2xl text-xs leading-relaxed ${
-                        msg.role === "user"
-                          ? "bg-gradient-to-tr from-emerald-600 to-teal-700 text-white rounded-tr-none shadow-md shadow-emerald-950/20"
-                          : "bg-white/10 text-slate-200 border border-white/10 rounded-tl-none whitespace-pre-wrap"
-                      }`}>
-                        {msg.content}
-                      </div>
-                      <span className="text-[9px] text-slate-400 font-mono mt-1 px-1">{msg.timestamp}</span>
-                    </div>
-                  ))}
-
-                  {chatLoading && (
-                    <div className="mr-auto flex items-center gap-2 max-w-[80%]">
-                      <div className="p-3 bg-white/5 border border-white/10 shadow-lg rounded-2xl rounded-tl-none flex items-center gap-1">
-                        <div className="h-1.5 w-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <div className="h-1.5 w-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <div className="h-1.5 w-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Suggested Quick Questions */}
-                <div className="p-3 border-t border-white/10 bg-[#050B18]/60 flex flex-col gap-2 text-left">
-                  <p className="text-[10px] text-slate-400 font-mono font-medium">SUGGESTED FAN FAQS:</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      onClick={() => handleChatSuggestion("What is the clear bag policy?")}
-                      className="text-[10px] bg-white/5 hover:bg-white/10 text-slate-300 px-2.5 py-1 rounded-full font-medium transition border border-white/5"
-                    >
-                      👜 Clear Bag Rules
-                    </button>
-                    <button
-                      onClick={() => handleChatSuggestion("How do I get to the stadium by train?")}
-                      className="text-[10px] bg-white/5 hover:bg-white/10 text-slate-300 px-2.5 py-1 rounded-full font-medium transition border border-white/5"
-                    >
-                      🚆 Train Route Directions
-                    </button>
-                    <button
-                      onClick={() => handleChatSuggestion("Is there a quiet room for sensory assistance?")}
-                      className="text-[10px] bg-white/5 hover:bg-white/10 text-slate-300 px-2.5 py-1 rounded-full font-medium transition border border-white/5"
-                    >
-                      🧠 Sensory Calm Room
-                    </button>
-                    <button
-                      onClick={() => handleChatSuggestion("Are water bottles permitted inside?")}
-                      className="text-[10px] bg-white/5 hover:bg-white/10 text-slate-300 px-2.5 py-1 rounded-full font-medium transition border border-white/5"
-                    >
-                      💧 Water Bottle Policy
-                    </button>
-                  </div>
-                </div>
-
-                {/* Input Text box */}
-                <div className="p-4 border-t border-white/10 bg-[#050B18]/80 rounded-b-2xl text-left">
-                  <label htmlFor="fan-chat-input" className="sr-only">
-                    Ask a question to Multilingual Fan Assist
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      id="fan-chat-input"
-                      type="text"
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-                      placeholder="Type a query (e.g., '¿Dónde está el sensory room?' or 'Train schedule')..."
-                      className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500/50 focus:bg-black/60 transition"
-                    />
-                    <button
-                      onClick={() => handleSendChat()}
-                      disabled={chatLoading || !chatInput.trim()}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2 flex items-center justify-center transition disabled:opacity-50 shadow-lg shadow-emerald-600/20"
-                    >
-                      <Send className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-              </div>
+              <FanChatPanel
+                chatMessages={chatMessages}
+                chatLoading={chatLoading}
+                chatInput={chatInput}
+                onChatInputChange={setChatInput}
+                onSendChat={handleSendChat}
+                onChatSuggestion={handleChatSuggestion}
+              />
 
             </div>
 
