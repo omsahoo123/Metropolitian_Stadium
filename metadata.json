@@ -1,0 +1,6 @@
+{
+  "name": "FIFA 2026 Stadium Operations & Fan Command Center",
+  "description": "A full-stack, GenAI-enabled Command Center for stadium operations, smart volunteer dispatch, and real-time fan assistance during the FIFA World Cup 2026.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
